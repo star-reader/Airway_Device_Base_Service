@@ -1,5 +1,5 @@
 use crate::error::{AeroBaseError, Result};
-use crate::flight::{FlightRoute, RouteWaypoint};
+use crate::flight::FlightRoute;
 
 /// Calculate fuel requirements in gallons
 pub fn calculate_fuel(route: &FlightRoute, fuel_flow_gph: f64) -> Result<f64> {

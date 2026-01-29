@@ -376,23 +376,6 @@ Linking with CMake
 
 Example `CMakeLists.txt`:
 
-```cmake
-cmake_minimum_required(VERSION 3.10)
-project(MyAvionicsApp)
-
-set(CMAKE_CXX_STANDARD 17)
-
-# Find the Airway Device Base Service library
-find_library(AEROBASE_LIB 
-    NAMES airway_device_base_service
-    PATHS ${CMAKE_SOURCE_DIR}/lib
-)
-
-add_executable(my_app main.cpp)
-target_include_directories(my_app PRIVATE ${CMAKE_SOURCE_DIR}/include)
-target_link_libraries(my_app ${AEROBASE_LIB})
-```
-
 ### API Functions
 
 Key C API functions available:
@@ -404,23 +387,6 @@ Key C API functions available:
 - `aerobase_calculate_route()`: Calculate flight route
 - `aerobase_validate_flight_plan()`: Validate flight plan
 - `aerobase_free()`: Clean up resources
-
-### Thread Safety
-
-The C API is thread-safe. Each `AeroBase` instance can be safely shared across threads with proper synchronization.
-
-## Platform Support
-
-- Linux (x86_64, aarch64)
-- macOS (Intel, Apple Silicon)
-- Windows (x86_64)
-
-## Safety and Security
-
-- No unsafe code in the library
-- SQL injection protection via parameterized queries
-- Device fingerprint hashing with SHA-256
-- Secure storage of sensitive data
 
 ## Contributing
 

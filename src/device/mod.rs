@@ -1,14 +1,15 @@
 pub mod fingerprint;
 pub mod identity;
+pub mod secure;
 
 use crate::db::Database;
-use crate::error::{AeroBaseError, Result};
+use crate::error::Result;
+use rusqlite::OptionalExtension;
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use uuid::Uuid;
 
-/// 设备信息
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Device {
     pub id: String,
@@ -18,23 +19,17 @@ pub struct Device {
     pub last_seen: i64,
 }
 
-/// 设备管理器，用于处理设备指纹和身份识别
 pub struct DeviceManager {
     db: Arc<Database>,
 }
 
 impl DeviceManager {
-    /// 创建新的设备管理器
     pub fn new(db: Arc<Database>) -> Result<Self> {
         Ok(Self { db })
     }
 
-    /// 获取或创建设备指纹
     pub fn get_or_create_fingerprint(&self) -> Result<Device> {
-        // Generate fingerprint
         let fingerprint = fingerprint::generate_fingerprint()?;
-        
-        // Try to find existing device with this fingerprint
         let conn = self.db.get_conn()?;
         
         let existing: Option<Device> = conn
@@ -55,7 +50,6 @@ impl DeviceManager {
             .optional()?;
         
         if let Some(mut device) = existing {
-            // Update last_seen
             device.last_seen = Utc::now().timestamp();
             conn.execute(
                 "UPDATE devices SET last_seen = ?1 WHERE id = ?2",
@@ -65,7 +59,6 @@ impl DeviceManager {
             log::info!("Found existing device: {}", device.id);
             Ok(device)
         } else {
-            // Create new device
             let device = Device {
                 id: Uuid::new_v4().to_string(),
                 fingerprint: fingerprint.clone(),
@@ -91,7 +84,6 @@ impl DeviceManager {
         }
     }
 
-    /// 根据 ID 获取设备
     pub fn get_device(&self, id: &str) -> Result<Option<Device>> {
         let conn = self.db.get_conn()?;
         
@@ -115,7 +107,6 @@ impl DeviceManager {
         Ok(device)
     }
 
-    /// 列出所有设备
     pub fn list_devices(&self) -> Result<Vec<Device>> {
         let conn = self.db.get_conn()?;
         
@@ -160,15 +151,12 @@ mod tests {
 
         let manager = DeviceManager::new(db).unwrap();
         
-        // Get or create fingerprint
         let device1 = manager.get_or_create_fingerprint().unwrap();
         assert!(!device1.id.is_empty());
-        
-        // Should return same device on second call
+
         let device2 = manager.get_or_create_fingerprint().unwrap();
         assert_eq!(device1.id, device2.id);
         
-        // List devices
         let devices = manager.list_devices().unwrap();
         assert_eq!(devices.len(), 1);
     }

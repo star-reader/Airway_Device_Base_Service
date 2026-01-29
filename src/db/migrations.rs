@@ -6,13 +6,13 @@ use crate::error::Result;
 pub fn run_migrations(conn: &Connection) -> Result<()> {
     let current_version = get_current_version(conn)?;
     
-    log::info!"当前数据库版本: {}", current_version);
+    log::info!("当前数据库版本: {}", current_version);
     
     if current_version < SCHEMA_VERSION {
-        log::info!"正在运行迁移，从版本 {} 到 {}", current_version, SCHEMA_VERSION);
+        log::info!("正在运行迁移，从版本 {} 到 {}", current_version, SCHEMA_VERSION);
         apply_migrations(conn)?;
     } else {
-        log::info!"数据库模式已是最新");
+        log::info!("数据库模式已是最新");
     }
     
     Ok(())
@@ -62,7 +62,7 @@ fn apply_migrations(conn: &Connection) -> Result<()> {
     
     tx.commit()?;
     
-    log::info!"迁移应用成功");
+    log::info!("迁移应用成功");
     Ok(())
 }
 

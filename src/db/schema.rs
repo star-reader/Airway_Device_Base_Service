@@ -23,6 +23,19 @@ pub fn get_schema_sql() -> Vec<&'static str> {
         )
         "#,
         
+        // Secure devices table (encrypted)
+        r#"
+        CREATE TABLE IF NOT EXISTS secure_devices (
+            id TEXT PRIMARY KEY,
+            encrypted_fingerprint TEXT NOT NULL,
+            encrypted_hardware_info TEXT NOT NULL,
+            encrypted_aes_key TEXT NOT NULL,
+            public_key_pem TEXT NOT NULL,
+            created_at INTEGER NOT NULL,
+            last_seen INTEGER NOT NULL
+        )
+        "#,
+        
         // Waypoints table
         r#"
         CREATE TABLE IF NOT EXISTS waypoints (
@@ -164,6 +177,6 @@ mod tests {
     fn test_schema_sql_count() {
         let statements = get_schema_sql();
         assert!(!statements.is_empty());
-        assert_eq!(statements.len(), 17); // Update if schema changes
+        assert_eq!(statements.len(), 18); // Update if schema changes
     }
 }

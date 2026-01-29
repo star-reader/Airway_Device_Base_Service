@@ -2,17 +2,17 @@ use geo::Point;
 use rstar::{RTree, RTreeObject, AABB};
 
 /// Spatial index entry
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct SpatialEntry {
     pub id: String,
-    pub point: Point<f64>,
+    pub point: [f64; 2],
 }
 
 impl RTreeObject for SpatialEntry {
     type Envelope = AABB<[f64; 2]>;
 
     fn envelope(&self) -> Self::Envelope {
-        AABB::from_point([self.point.x(), self.point.y()])
+        AABB::from_point(self.point)
     }
 }
 
@@ -30,20 +30,32 @@ impl SpatialIndex {
 
     /// Find entries within a radius (in degrees)
     pub fn find_within_radius(&self, point: Point<f64>, radius: f64) -> Vec<&SpatialEntry> {
+        let search_point = [point.x(), point.y()];
         self.tree
-            .locate_within_distance([point.x(), point.y()], radius * radius)
+            .locate_all_at_point(&search_point)
+            .chain(
+                self.tree
+                    .iter()
+                    .filter(|entry| {
+                        let dx = entry.point[0] - search_point[0];
+                        let dy = entry.point[1] - search_point[1];
+                        (dx * dx + dy * dy).sqrt() <= radius
+                    })
+            )
             .collect()
     }
 
     /// Find nearest entry
     pub fn find_nearest(&self, point: Point<f64>) -> Option<&SpatialEntry> {
-        self.tree.nearest_neighbor(&[point.x(), point.y()])
+        let search_point = [point.x(), point.y()];
+        self.tree.nearest_neighbor(&search_point)
     }
 
     /// Find k nearest entries
     pub fn find_k_nearest(&self, point: Point<f64>, k: usize) -> Vec<&SpatialEntry> {
+        let search_point = [point.x(), point.y()];
         self.tree
-            .nearest_neighbor_iter(&[point.x(), point.y()])
+            .nearest_neighbor_iter(&search_point)
             .take(k)
             .collect()
     }
