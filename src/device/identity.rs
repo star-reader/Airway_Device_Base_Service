@@ -1,6 +1,5 @@
 use serde::{Deserialize, Serialize};
 
-/// Device identity information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Identity {
     pub device_id: String,
@@ -9,7 +8,6 @@ pub struct Identity {
 }
 
 impl Identity {
-    /// Create a new identity
     pub fn new(device_id: String, fingerprint: String) -> Self {
         Self {
             device_id,
@@ -17,8 +15,6 @@ impl Identity {
             is_authorized: true,
         }
     }
-
-    /// Check if identity is valid
     pub fn is_valid(&self) -> bool {
         !self.device_id.is_empty() && !self.fingerprint.is_empty() && self.is_authorized
     }

@@ -19,9 +19,13 @@ pub struct Database {
 impl Database {
     /// 创建新的数据库实例
     pub fn new(config: &Config) -> Result<Self> {
-        let manager = SqliteConnectionManager::file(&config.db_path)
-            .with_init(|conn| {
-                if config.enable_wal {
+        let db_path = config.db_path.clone();
+        let enable_wal = config.enable_wal;
+        let pool_size = config.pool_size;
+        
+        let manager = SqliteConnectionManager::file(db_path)
+            .with_init(move |conn| {
+                if enable_wal {
                     conn.execute_batch("PRAGMA journal_mode=WAL;")?;
                 }
                 conn.execute_batch(
@@ -34,7 +38,7 @@ impl Database {
             });
 
         let pool = Pool::builder()
-            .max_size(config.pool_size)
+            .max_size(pool_size)
             .build(manager)?;
 
         Ok(Self { pool })

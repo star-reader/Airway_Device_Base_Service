@@ -2,17 +2,17 @@ use geo::Point;
 use rstar::{RTree, RTreeObject, AABB};
 
 /// Spatial index entry
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct SpatialEntry {
     pub id: String,
-    pub point: Point<f64>,
+    pub point: [f64; 2],
 }
 
 impl RTreeObject for SpatialEntry {
     type Envelope = AABB<[f64; 2]>;
 
     fn envelope(&self) -> Self::Envelope {
-        AABB::from_point([self.point.x(), self.point.y()])
+        AABB::from_point(self.point)
     }
 }
 
@@ -30,22 +30,57 @@ impl SpatialIndex {
 
     /// Find entries within a radius (in degrees)
     pub fn find_within_radius(&self, point: Point<f64>, radius: f64) -> Vec<&SpatialEntry> {
+        let search_point = [point.x(), point.y()];
+        let bbox = AABB::from_corners(
+            [search_point[0] - radius, search_point[1] - radius],
+            [search_point[0] + radius, search_point[1] + radius],
+        );
+        
         self.tree
-            .locate_within_distance([point.x(), point.y()], radius * radius)
+            .locate_in_envelope(&bbox)
+            .filter(|entry| {
+                let dx = entry.point[0] - search_point[0];
+                let dy = entry.point[1] - search_point[1];
+                (dx * dx + dy * dy).sqrt() <= radius
+            })
             .collect()
     }
 
-    /// Find nearest entry
+    /// Find nearest entry (using linear search for simplicity)
     pub fn find_nearest(&self, point: Point<f64>) -> Option<&SpatialEntry> {
-        self.tree.nearest_neighbor(&[point.x(), point.y()])
+        let search_point = [point.x(), point.y()];
+        self.tree
+            .iter()
+            .min_by(|a, b| {
+                let dist_a = {
+                    let dx = a.point[0] - search_point[0];
+                    let dy = a.point[1] - search_point[1];
+                    dx * dx + dy * dy
+                };
+                let dist_b = {
+                    let dx = b.point[0] - search_point[0];
+                    let dy = b.point[1] - search_point[1];
+                    dx * dx + dy * dy
+                };
+                dist_a.partial_cmp(&dist_b).unwrap_or(std::cmp::Ordering::Equal)
+            })
     }
 
     /// Find k nearest entries
     pub fn find_k_nearest(&self, point: Point<f64>, k: usize) -> Vec<&SpatialEntry> {
-        self.tree
-            .nearest_neighbor_iter(&[point.x(), point.y()])
-            .take(k)
-            .collect()
+        let search_point = [point.x(), point.y()];
+        let mut entries: Vec<_> = self.tree
+            .iter()
+            .map(|entry| {
+                let dx = entry.point[0] - search_point[0];
+                let dy = entry.point[1] - search_point[1];
+                let dist = dx * dx + dy * dy;
+                (entry, dist)
+            })
+            .collect();
+        
+        entries.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
+        entries.into_iter().take(k).map(|(entry, _)| entry).collect()
     }
 }
 
@@ -58,15 +93,15 @@ mod tests {
         let entries = vec![
             SpatialEntry {
                 id: "1".to_string(),
-                point: Point::new(0.0, 0.0),
+                point: [0.0, 0.0],
             },
             SpatialEntry {
                 id: "2".to_string(),
-                point: Point::new(1.0, 1.0),
+                point: [1.0, 1.0],
             },
             SpatialEntry {
                 id: "3".to_string(),
-                point: Point::new(2.0, 2.0),
+                point: [2.0, 2.0],
             },
         ];
 
@@ -83,15 +118,15 @@ mod tests {
         let entries = vec![
             SpatialEntry {
                 id: "1".to_string(),
-                point: Point::new(0.0, 0.0),
+                point: [0.0, 0.0],
             },
             SpatialEntry {
                 id: "2".to_string(),
-                point: Point::new(0.1, 0.1),
+                point: [0.1, 0.1],
             },
             SpatialEntry {
                 id: "3".to_string(),
-                point: Point::new(10.0, 10.0),
+                point: [10.0, 10.0],
             },
         ];
 

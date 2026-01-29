@@ -3,44 +3,28 @@ use serde_json::json;
 use sha2::{Digest, Sha256};
 use sysinfo::System;
 
-/// Generate a unique device fingerprint
 pub fn generate_fingerprint() -> Result<String> {
     let mut hasher = Sha256::new();
-    
-    // Try to get machine UID first (most reliable)
     if let Ok(machine_id) = machine_uid::get() {
         hasher.update(machine_id.as_bytes());
     } else {
-        // Fallback to system information
         let sys = System::new_all();
-        
-        // System name
         if let Some(name) = System::name() {
             hasher.update(name.as_bytes());
         }
-        
-        // OS version
         if let Some(os_version) = System::os_version() {
             hasher.update(os_version.as_bytes());
         }
-        
-        // Kernel version
         if let Some(kernel) = System::kernel_version() {
             hasher.update(kernel.as_bytes());
         }
-        
-        // Host name
         if let Some(hostname) = System::host_name() {
             hasher.update(hostname.as_bytes());
         }
-        
-        // CPU count and brand
         hasher.update(sys.cpus().len().to_string().as_bytes());
         if let Some(cpu) = sys.cpus().first() {
             hasher.update(cpu.brand().as_bytes());
         }
-        
-        // Total memory
         hasher.update(sys.total_memory().to_string().as_bytes());
     }
     
@@ -48,7 +32,6 @@ pub fn generate_fingerprint() -> Result<String> {
     Ok(format!("{:x}", result))
 }
 
-/// Get detailed hardware information
 pub fn get_hardware_info() -> Result<String> {
     let sys = System::new_all();
     
@@ -75,18 +58,14 @@ mod tests {
     fn test_generate_fingerprint() {
         let fp1 = generate_fingerprint().unwrap();
         let fp2 = generate_fingerprint().unwrap();
-        
-        // Should generate same fingerprint on same machine
         assert_eq!(fp1, fp2);
-        assert_eq!(fp1.len(), 64); // SHA256 hex string length
+        assert_eq!(fp1.len(), 64);
     }
 
     #[test]
     fn test_hardware_info() {
         let info = get_hardware_info().unwrap();
         assert!(!info.is_empty());
-        
-        // Should be valid JSON
         let parsed: serde_json::Value = serde_json::from_str(&info).unwrap();
         assert!(parsed.is_object());
     }

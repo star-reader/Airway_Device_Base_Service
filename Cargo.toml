@@ -37,6 +37,14 @@ chrono = { version = "0.4", features = ["serde"] }
 sysinfo = "0.33"
 machine-uid = "0.5"
 
+# 加密相关依赖
+aes-gcm = "0.10"
+rsa = { version = "0.9", features = ["sha2"] }
+rand = "0.8"
+base64 = "0.22"
+zeroize = "1.8"
+pbkdf2 = "0.12"
+
 [dev-dependencies]
 criterion = { version = "0.5", features = ["html_reports"] }
 proptest = "1.6"
