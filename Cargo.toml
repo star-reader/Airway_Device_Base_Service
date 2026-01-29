@@ -1,0 +1,56 @@
+[package]
+name = "airway-device-base-service"
+version = "0.1.0"
+edition = "2021"
+authors = ["Jerry Jin"]
+description = "A lightweight, embedded aviation database service written in Rust"
+license = "MIT"
+repository = "https://github.com/star-reader/Airway_Device_Base_Service"
+keywords = ["aviation", "database", "embedded", "offline", "flight-planning"]
+categories = ["aerospace", "database", "embedded"]
+
+[lib]
+name = "airway_device_base_service"
+path = "src/lib.rs"
+crate-type = ["rlib", "cdylib", "staticlib"]
+
+[features]
+default = []
+ffi = []
+
+[dependencies]
+rusqlite = { version = "0.32", features = ["bundled", "uuid"] }
+r2d2 = "0.8"
+r2d2_sqlite = "0.25"
+tokio = { version = "1.41", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+uuid = { version = "1.11", features = ["v4", "serde"] }
+sha2 = "0.10"
+geo = "0.28"
+rstar = "0.12"
+thiserror = "2.0"
+anyhow = "1.0"
+log = "0.4"
+env_logger = "0.11"
+chrono = { version = "0.4", features = ["serde"] }
+sysinfo = "0.33"
+machine-uid = "0.5"
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+proptest = "1.6"
+mockall = "0.13"
+tempfile = "3.15"
+
+[[example]]
+name = "basic_usage"
+path = "examples/basic_usage.rs"
+
+[[example]]
+name = "spatial_query"
+path = "examples/spatial_query.rs"
+
+[[example]]
+name = "flight_plan"
+path = "examples/flight_plan.rs"
